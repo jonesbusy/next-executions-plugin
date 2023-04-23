@@ -1,16 +1,12 @@
 package hudson.plugins.nextexecutions;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
-import java.util.logging.Logger;
-
 import jenkins.model.Jenkins;
-
 import org.kohsuke.stapler.Stapler;
-
 import hudson.Extension;
 import hudson.model.Api;
 import hudson.model.Queue;
@@ -41,9 +37,8 @@ import org.kohsuke.stapler.export.ExportedBean;
 @ExportedBean
 @Extension
 public class NextExecutionsWidget extends Widget {
-	private static final Logger LOGGER = Logger.getLogger(NextExecutionsWidget.class.getName());
 	 
-	protected Class<? extends Trigger> triggerClass;
+	protected Class<? extends Trigger<?>> triggerClass;
 	public NextExecutionsWidget() {
 		triggerClass = TimerTrigger.class;
 	}
@@ -51,13 +46,13 @@ public class NextExecutionsWidget extends Widget {
 	public Api getApi() { return new Api(this); }
 
 	@Exported(name = "next_executions")
+	@SuppressWarnings("rawtypes")
 	public List<NextBuilds> getBuilds() {
-		List<NextBuilds> nblist = new Vector<NextBuilds>();
 
-		List<ParameterizedJobMixIn.ParameterizedJob> l;
+		List<NextBuilds> nblist = new ArrayList<>();
+		List<ParameterizedJobMixIn.ParameterizedJob> l = new ArrayList<>();
 		
 		View v = Stapler.getCurrentRequest().findAncestorObject(View.class);
-		
 		Jenkins j = Jenkins.getInstanceOrNull();
 
 		if (j == null) {
@@ -65,24 +60,25 @@ public class NextExecutionsWidget extends Widget {
 		}
 
 		DescriptorImpl d = (DescriptorImpl)(j.getDescriptorOrDie(NextBuilds.class));
+		List<ParameterizedJobMixIn.ParameterizedJob> vector = new ArrayList<ParameterizedJobMixIn.ParameterizedJob>();
 		
-		if(d.getFilterByView() && v != null)
-		{
+		// Filter by view
+		if(d.getFilterByView() && v != null) {
 			Collection<TopLevelItem> tli = v.getItems();
-			Vector<ParameterizedJobMixIn.ParameterizedJob> vector = new Vector<ParameterizedJobMixIn.ParameterizedJob>();
 			for (TopLevelItem topLevelItem : tli) {
 				if(topLevelItem instanceof ParameterizedJobMixIn.ParameterizedJob){
-					vector.add((ParameterizedJobMixIn.ParameterizedJob)topLevelItem);
+					vector.add((ParameterizedJobMixIn.ParameterizedJob<?, ?>)topLevelItem);
 				}
 			}
 			l = vector;
 		}
-		else{
+
+		// Don't filter by view
+		else {
 			l = j.getItems(ParameterizedJobMixIn.ParameterizedJob.class);
 		}
 		
-		
-		for (ParameterizedJobMixIn.ParameterizedJob project: l) {
+		for (ParameterizedJobMixIn.ParameterizedJob<?, ?> project: l) {
 			NextBuilds nb = NextExecutionsUtils.getNextBuild(project, triggerClass);
 			if(nb != null)
 				nblist.add(nb);
@@ -101,7 +97,7 @@ public class NextExecutionsWidget extends Widget {
 					long nowMilliseconds = now.getTimeInMillis();
 					now.setTimeInMillis(nowMilliseconds + 60 * 1000);
 					if(waitingItem.timestamp.after(now)) {
-						NextBuilds nb = new NextBuilds((ParameterizedJobMixIn.ParameterizedJob)item.task, waitingItem.timestamp);
+						NextBuilds nb = new NextBuilds((ParameterizedJobMixIn.ParameterizedJob<?, ?>)item.task, waitingItem.timestamp);
 						nblist.add(nb);
 					}
 			

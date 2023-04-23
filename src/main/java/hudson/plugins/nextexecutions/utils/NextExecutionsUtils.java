@@ -28,19 +28,19 @@ public class NextExecutionsUtils {
      * date or null.
      */
     @Deprecated
-    public static NextBuilds getNextBuild(ParameterizedJobMixIn.ParameterizedJob project) {
+    public static NextBuilds getNextBuild(ParameterizedJobMixIn.ParameterizedJob<?, ?> project) {
         return getNextBuild(project, TimerTrigger.class);
     }
 
-    public static NextBuilds getNextBuild(ParameterizedJobMixIn.ParameterizedJob project, Class<? extends Trigger> triggerClass) {
+    public static NextBuilds getNextBuild(ParameterizedJobMixIn.ParameterizedJob<?, ?> project, Class<? extends Trigger<?>> triggerClass) {
         Calendar cal = null;
         // Only AbstractProject has isDisabled method
-        if ((project instanceof AbstractProject && !((AbstractProject) project).isDisabled())
+        if ((project instanceof AbstractProject && !((AbstractProject<?, ?>) project).isDisabled())
                 || !(project instanceof AbstractProject)) {
             Map<TriggerDescriptor, Trigger<?>> triggers = project.getTriggers();
             Iterator<Map.Entry<TriggerDescriptor, Trigger<?>>> iterator = triggers.entrySet().iterator();
             while (iterator.hasNext()) {
-                Trigger trigger = iterator.next().getValue();
+                Trigger<?> trigger = iterator.next().getValue();
                 if (trigger.getClass().equals(triggerClass)) {
                     try {
                         Field triggerTabsField = Trigger.class.getDeclaredField("tabs");

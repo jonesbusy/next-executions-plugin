@@ -4,10 +4,8 @@ import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,13 +26,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * 
  */
 @ExportedBean(defaultVisibility = 2)
-public class NextBuilds implements Comparable, Describable<NextBuilds>{
-	private ParameterizedJobMixIn.ParameterizedJob project;
+public class NextBuilds implements Comparable<NextBuilds>, Describable<NextBuilds>{
+	private ParameterizedJobMixIn.ParameterizedJob<?, ?> project;
 	private String name;
-	private String dateString;
 	private Calendar date;
 	
-	public NextBuilds(ParameterizedJobMixIn.ParameterizedJob project, Calendar date) {
+	public NextBuilds(ParameterizedJobMixIn.ParameterizedJob<?, ?> project, Calendar date) {
 		this.project = project;
 		this.name = Util.escape(project.getDisplayName());
 		this.date = date;
@@ -58,8 +55,7 @@ public class NextBuilds implements Comparable, Describable<NextBuilds>{
 	
 	public String getTimeToGo() {
 		ZoneId zone = date.getTimeZone().toZoneId();
-		ZonedDateTime now = ZonedDateTime.now(zone);
-		ZonedDateTime zonedNow = now.withZoneSameInstant(zone);
+		ZonedDateTime zonedNow = ZonedDateTime.now(zone).withZoneSameInstant(zone);
 		ZonedDateTime zonedDate = Instant.ofEpochMilli(date.getTimeInMillis()).atZone(zone);
 		Duration duration = Duration.between(zonedNow, zonedDate);
 		long days = duration.toDays();
@@ -97,16 +93,8 @@ public class NextBuilds implements Comparable, Describable<NextBuilds>{
 
 	@Override
 	@SuppressFBWarnings(value = "EQ_COMPARETO_USE_OBJECT_EQUALS")
-	// TODO: Review this SuppressFBWarnings
-	public int compareTo(Object o) {
-		if(o instanceof NextBuilds){
-			NextBuilds toCompare = (NextBuilds)o;
-			return this.date.compareTo(toCompare.date);
-			
-		}
-		else{
-			return 0;
-		}
+	public int compareTo(NextBuilds o) {
+		return this.date.compareTo(o.date);
 	}
 
 	public DescriptorImpl getDescriptor() {
@@ -175,11 +163,7 @@ public class NextBuilds implements Comparable, Describable<NextBuilds>{
 		
 		public FormValidation doCheckDateFormat(@QueryParameter String value) {
 			try{
-				// We don't really use it. It's just to check if it
-				//  throws an exception
-				SimpleDateFormat sdf = new SimpleDateFormat(value);
-				// Call random method to avoid spotbugs DLS_DEAD_LOCAL_STORE
-				sdf.getClass();
+				DateTimeFormatter.ofPattern(value);
 				return FormValidation.ok();
 			}
 			catch (IllegalArgumentException e) {

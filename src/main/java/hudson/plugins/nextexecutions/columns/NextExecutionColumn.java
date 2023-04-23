@@ -22,16 +22,16 @@ import jenkins.model.ParameterizedJobMixIn;
 
 public class NextExecutionColumn extends ListViewColumn {
 
-	protected Class<? extends Trigger> triggerClass;
+	protected Class<? extends Trigger<?>> triggerClass;
 
 	@DataBoundConstructor
 	public NextExecutionColumn() {
 	    triggerClass = TimerTrigger.class;
 	}
 	
-	public String getNextExecution(Job job){
+	public String getNextExecution(Job<?, ?> job){
 		if(job instanceof ParameterizedJobMixIn.ParameterizedJob){
-			NextBuilds b = NextExecutionsUtils.getNextBuild((ParameterizedJobMixIn.ParameterizedJob)job, triggerClass);
+			NextBuilds b = NextExecutionsUtils.getNextBuild((ParameterizedJobMixIn.ParameterizedJob<?, ?>)job, triggerClass);
 			if(b != null)
 				return b.getDate();
 		}
@@ -40,17 +40,13 @@ public class NextExecutionColumn extends ListViewColumn {
 	
 	@Extension
 	public static class DescriptorImpl extends ListViewColumnDescriptor {
-
 		@Override
 		public String getDisplayName() {
-			// TODO Auto-generated method stub
 			return Messages.NextExecutions_ColumnName();
 		}
 		@Override
 		public boolean shownByDefault() {
 			return false;
 		}
-		
 	}
-
 }
