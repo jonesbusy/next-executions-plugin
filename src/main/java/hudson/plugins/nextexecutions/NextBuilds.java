@@ -3,21 +3,17 @@ package hudson.plugins.nextexecutions;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
-import hudson.plugins.nextexecutions.Messages;
 import hudson.util.FormValidation;
-
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
-import java.util.Date;
-
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import hudson.Util;
@@ -44,40 +40,44 @@ public class NextBuilds implements Comparable, Describable<NextBuilds>{
 		this.date = date;
 	}
 	
-	private String formatDate(Date d) {
+	private String formatDate(ZonedDateTime d) {
 		String dateFormat = this.getDescriptor().getDateFormat();
 		if(dateFormat == null){
 			dateFormat = this.getDescriptor().getDefault();
 		}
-		SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
-		return sdf.format(d.getTime());
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat);
+		return formatter.format(d);
 	}
 	
 	@Exported
 	public String getDate() {
-		return formatDate(date.getTime());
+		ZoneId zone = date.getTimeZone().toZoneId();
+		ZonedDateTime zonedDate = Instant.ofEpochMilli(date.getTimeInMillis()).atZone(zone).withZoneSameInstant(zone);
+		return formatDate(zonedDate);
 	}
 	
 	public String getTimeToGo() {
-		DateTime now = new DateTime();
-		
-		PeriodType periodType = PeriodType.dayTime();
-		periodType = periodType.withMillisRemoved();
-		Period timeToGo = new Period(now, new DateTime(date.getTimeInMillis()),
-				periodType);  
-
-		PeriodFormatter pf = new PeriodFormatterBuilder().
-			appendDays().
-			appendSuffix("d").
-			appendSeparatorIfFieldsBefore(" ").
-			appendHours().
-			appendSuffix("h").
-			appendSeparatorIfFieldsBefore(" ").
-			appendMinutes().
-			appendSuffix("m").
-			toFormatter();
-		
-		return Messages.timeToGo(pf.print(timeToGo));
+		ZoneId zone = date.getTimeZone().toZoneId();
+		ZonedDateTime now = ZonedDateTime.now(zone);
+		ZonedDateTime zonedNow = now.withZoneSameInstant(zone);
+		ZonedDateTime zonedDate = Instant.ofEpochMilli(date.getTimeInMillis()).atZone(zone);
+		Duration duration = Duration.between(zonedNow, zonedDate);
+		long days = duration.toDays();
+		long hours = duration.toHours() % 24;
+		long minutes = duration.toMinutes() % 60;
+	
+		StringBuilder sb = new StringBuilder();
+		if (days > 0) {
+			sb.append(days).append("d ");
+		}
+		if (hours > 0) {
+			sb.append(hours).append("h ");
+		}
+		if (minutes > 0) {
+			sb.append(minutes).append("m");
+		}
+	
+		return Messages.timeToGo(sb.toString());
 	}
 	
 	@Exported
@@ -155,7 +155,7 @@ public class NextBuilds implements Comparable, Describable<NextBuilds>{
 		}
 
 		public String getDefault() {
-			return "dd/MM/yyyy HH:mm";
+			return "dd/MM/yyyy HH:mm z";
 		}
 		
 		public boolean getFilterByViewDefault() {
