@@ -78,7 +78,7 @@ public class NextExecutionsWidget extends Widget {
 			l = vector;
 		}
 		else{
-			l = j.getItems(ParameterizedJobMixIn.ParameterizedJob.class);
+			l = j.getAllItems(ParameterizedJobMixIn.ParameterizedJob.class);
 		}
 		
 		for (ParameterizedJobMixIn.ParameterizedJob project: l) {

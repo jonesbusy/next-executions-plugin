@@ -36,7 +36,7 @@ public class NextBuilds implements Comparable, Describable<NextBuilds>{
 	
 	public NextBuilds(ParameterizedJobMixIn.ParameterizedJob project, Calendar date) {
 		this.project = project;
-		this.name = Util.escape(project.getDisplayName());
+		this.name = Util.escape(project.getFullDisplayName());
 		this.date = date;
 	}
 	
