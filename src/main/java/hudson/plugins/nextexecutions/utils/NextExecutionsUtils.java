@@ -15,6 +15,8 @@ import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TimeZone;
+
 import jenkins.model.ParameterizedJobMixIn;
 
 public class NextExecutionsUtils {
@@ -54,6 +56,7 @@ public class NextExecutionsUtils {
                         for (CronTab cronTab : crons) {
                             Date d = new Date();
                             cal = (cal == null || cal.compareTo(cronTab.ceil(d.getTime())) > 0) ? cronTab.ceil(d.getTime()) : cal;
+                            cal.setTimeZone(cronTab.getTimeZone() != null ? cronTab.getTimeZone() : TimeZone.getDefault());
                         }
                     } catch (NoSuchFieldException e) {
                         e.printStackTrace();
