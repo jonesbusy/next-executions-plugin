@@ -8,6 +8,7 @@ import hudson.model.Queue.WaitingItem;
 import hudson.model.TopLevelItem;
 import hudson.model.View;
 import hudson.plugins.nextexecutions.NextBuilds.DescriptorImpl;
+import hudson.plugins.nextexecutions.utils.ExtendedNextExecutionsUtils;
 import hudson.plugins.nextexecutions.utils.NextExecutionsUtils;
 import hudson.plugins.nextexecutions.utils.ParameterizedNextExecutionsUtils;
 import hudson.triggers.TimerTrigger;
@@ -18,6 +19,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
+import java.util.logging.Logger;
+
+import io.jenkins.plugins.extended_timer_trigger.ExtendedTimerTrigger;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.widgets.WidgetFactory;
@@ -96,12 +100,20 @@ public class NextExecutionsWidget extends Widget {
                 nblist.add(nb);
             }
             // Check parameterized
-            else if (getShowParameterizedWidget()) {
+            if (getShowParameterizedWidget()) {
                 nb = ParameterizedNextExecutionsUtils.getNextBuild(project, triggerClass);
                 if (nb != null) {
                     nblist.add(nb);
                 }
             }
+            // Check extended widget
+            if (getShowExtendedWidget()) {
+                nb = ExtendedNextExecutionsUtils.getNextBuild(project, triggerClass);
+                if (nb != null) {
+                    nblist.add(nb);
+                }
+            }
+
         }
 
         // Get also the items in the queue but only those that have a waiting
@@ -152,6 +164,15 @@ public class NextExecutionsWidget extends Widget {
             return false;
         }
         return d.getShowParameterizedWidget();
+    }
+
+    public boolean getShowExtendedWidget() {
+        Jenkins j = Jenkins.getInstanceOrNull();
+        DescriptorImpl d = j != null ? (DescriptorImpl) (j.getDescriptorOrDie(NextBuilds.class)) : null;
+        if (d == null) {
+            return false;
+        }
+        return d.getShowExtendedWidget();
     }
 
     @Symbol("nextExecutionsWidget")
