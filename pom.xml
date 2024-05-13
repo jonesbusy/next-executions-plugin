@@ -39,6 +39,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>extended-timer-trigger</artifactId>
+      <version>16.va_f693b_a_f344c</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>parameterized-scheduler</artifactId>
       <version>262.v00f3d90585cc</version>
